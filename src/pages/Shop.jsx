@@ -16,6 +16,7 @@ const SORTS = [
 export default function Shop() {
   const { products = [], categories = [], catalogLoading } = useStore()
   const [active, setActive] = useState("all")
+  const [hoveredCategory, setHoveredCategory] = useState(null)
   const [sort, setSort] = useState("featured")
   const [mounted, setMounted] = useState(false)
   const scroller = useRef(null)
@@ -53,30 +54,49 @@ export default function Shop() {
 
         <div className="mt-10 flex flex-col gap-4 border-y border-nova-border py-5 md:flex-row md:items-center md:justify-between">
           <div className="flex flex-wrap gap-2">
+            {/* All Button */}
             <button
               type="button"
               onClick={() => setActive("all")}
-              className={`px-4 py-2 text-[11px] uppercase tracking-[0.16em] transition-colors ${
-                active === "all" ? "bg-nova-ink text-white" : "text-nova-muted hover:text-nova-ink"
-              }`}
+              onMouseEnter={() => setHoveredCategory("all")}
+              onMouseLeave={() => setHoveredCategory(null)}
+              className="px-4 py-2 text-[11px] font-medium uppercase tracking-[0.16em] transition-colors duration-200"
+              style={{
+                background: active === "all" ? "var(--nova-ink, #000)" : "transparent",
+                color:
+                  active === "all"
+                    ? "#fff"
+                    : hoveredCategory === "all"
+                    ? "var(--nova-ink, #000)"
+                    : "var(--muted, #6b6b67)",
+              }}
             >
               All
             </button>
-            {categories.map((c) => (
-              <button
-                key={c.id}
-                type="button"
-                onClick={() => setActive(c.slug)}
-                className="px-4 py-2 text-[11px] uppercase tracking-[0.16em] transition-colors"
-                style={
-                  active === c.slug
-                    ? { background: c.accent, color: "#fff" }
-                    : { color: "var(--muted, #6b6b67)" }
-                }
-              >
-                {c.name}
-              </button>
-            ))}
+
+            {/* Dynamic Category Buttons */}
+            {categories.map((c) => {
+              const isActive = active === c.slug
+              const isHovered = hoveredCategory === c.slug
+              const accentColor = c.accent || "var(--nova-ink, #000)"
+
+              return (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => setActive(c.slug)}
+                  onMouseEnter={() => setHoveredCategory(c.slug)}
+                  onMouseLeave={() => setHoveredCategory(null)}
+                  className="px-4 py-2 text-[11px] font-medium uppercase tracking-[0.16em] transition-colors duration-200"
+                  style={{
+                    background: isActive ? accentColor : "transparent",
+                    color: isActive ? "#fff" : isHovered ? accentColor : "var(--muted, #6b6b67)",
+                  }}
+                >
+                  {c.name}
+                </button>
+              )
+            })}
           </div>
 
           <label className="flex items-center gap-2 text-[11px] uppercase tracking-[0.16em] text-nova-muted">
@@ -114,24 +134,15 @@ export default function Shop() {
           </button>
         </div>
 
-        <div
-          ref={scroller}
-          className="hide-scrollbar mt-6 flex snap-x snap-mandatory gap-8 overflow-x-auto pb-6"
-        >
+        <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
           {catalogLoading
-            ? Array.from({ length: 6 }).map((_, i) => (
-                <div
-                  key={i}
-                  className="w-[85%] shrink-0 snap-start sm:w-[calc((100%-2rem)/2)] lg:w-[calc((100%-4rem)/3)]"
-                >
+            ? Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} className="w-full">
                   <ProductCardSkeleton fluid />
                 </div>
               ))
             : filtered.map((product, i) => (
-                <div
-                  key={product.id}
-                  className="w-[85%] shrink-0 snap-start sm:w-[calc((100%-2rem)/2)] lg:w-[calc((100%-4rem)/3)]"
-                >
+                <div key={product.id || product._id || i} className="w-full">
                   <ProductCard product={product} index={i} fluid />
                 </div>
               ))}
